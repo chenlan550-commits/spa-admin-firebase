@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/polung/Desktop/luxury-spa-website/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

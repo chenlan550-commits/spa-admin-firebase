@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 療程服務 - 前端可讀取，只有登入用戶可以修改
+    match /services/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 內容管理 - 前端可讀取，只有登入用戶可以修改
+    match /content/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 設定 - 前端可讀取，只有登入用戶可以修改
+    match /settings/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 預約 - 任何人可以創建預約，只有登入用戶可以查看和管理
+    match /appointments/{document} {
+      allow create: if true;  // 前端網站可以創建預約
+      allow read, update, delete: if request.auth != null;  // 只有後台管理員可以管理
+    }
+
+    // 客戶資料 - 只有登入用戶可以訪問
+    match /customers/{document} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
