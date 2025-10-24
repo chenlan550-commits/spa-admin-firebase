@@ -75,7 +75,12 @@ export const deleteServiceImage = async (imageUrl) => {
 export const createService = async (serviceData, imageFile = null) => {
   try {
     const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-      ...serviceData,
+      name: serviceData.name || '',
+      description: serviceData.description || '',
+      price: parseInt(serviceData.price) || 0,
+      selfOilPrice: serviceData.selfOilPrice ? parseInt(serviceData.selfOilPrice) : null,
+      duration: parseInt(serviceData.duration) || 60,
+      order: parseInt(serviceData.order) || 0,
       imageUrl: '',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
@@ -111,7 +116,12 @@ export const updateService = async (id, serviceData, imageFile = null) => {
     }
 
     await updateDoc(docRef, {
-      ...serviceData,
+      name: serviceData.name || '',
+      description: serviceData.description || '',
+      price: parseInt(serviceData.price) || 0,
+      selfOilPrice: serviceData.selfOilPrice ? parseInt(serviceData.selfOilPrice) : null,
+      duration: parseInt(serviceData.duration) || 60,
+      order: parseInt(serviceData.order) || 0,
       imageUrl,
       updatedAt: Timestamp.now()
     });

@@ -1,45 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getTodayBookings, getMonthBookings } from '../services/bookingService';
 import { getAllCustomers, getMembershipStats } from '../services/customerService';
+import { getSubscriberStats } from '../services/newsletterService';
+import { getMessageStats } from '../services/contactService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import CustomerManagement from './CustomerManagement';
-import BookingManagement from './BookingManagement';
-import ServiceManagement from './ServiceManagement';
-import ContentManagement from './ContentManagement';
-import SettingsManagement from './SettingsManagement';
+
+// 使用動態導入優化初始加載
+const CustomerManagement = lazy(() => import('./CustomerManagement'));
+const ServiceManagement = lazy(() => import('./ServiceManagement'));
+const BookingManagement = lazy(() => import('./BookingManagement'));
+const VisitManagement = lazy(() => import('./VisitManagement'));
+const ContentManagement = lazy(() => import('./ContentManagement'));
+const SettingsManagement = lazy(() => import('./SettingsManagement'));
+const MessageCenter = lazy(() => import('./MessageCenter'));
+const Reports = lazy(() => import('./Reports'));
 import {
   LayoutDashboard,
   Users,
-  Calendar,
   Sparkles,
   FileText,
   Settings,
   LogOut,
   Flower2,
-  TrendingUp,
-  UserPlus,
-  CalendarCheck,
-  Crown
+  Crown,
+  MessageSquare,
+  Mail,
+  BarChart3,
+  Calendar,
+  ClipboardList
 } from 'lucide-react';
+
+// 加載中組件
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      <p className="mt-4 text-muted-foreground">載入中...</p>
+    </div>
+  </div>
+);
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({
-    todayBookings: 0,
-    monthBookings: 0,
     totalCustomers: 0,
-    monthRevenue: 0,
-    recentBookings: []
+    newsletterSubscribers: 0,
+    unreadMessages: 0
   });
   const [membershipStats, setMembershipStats] = useState({
     regular: 0,
-    deposit_20k: 0,
-    deposit_30k: 0,
-    deposit_50k: 0,
     vip: 0,
     total: 0
   });
@@ -52,38 +64,18 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth();
 
-      const [todayData, monthData, customersData, membershipData] = await Promise.all([
-        getTodayBookings(),
-        getMonthBookings(currentYear, currentMonth),
+      const [customersData, membershipData, subscriberData, messageData] = await Promise.all([
         getAllCustomers(),
-        getMembershipStats()
+        getMembershipStats(),
+        getSubscriberStats(),
+        getMessageStats()
       ]);
 
-      // 計算本月營收（假設每筆預約都有價格）
-      const monthRevenue = monthData.reduce((sum, booking) => {
-        // 這裡可以根據實際的服務價格計算
-        return sum + (booking.price || 0);
-      }, 0);
-
-      // 取最近5筆預約
-      const recentBookings = [...monthData]
-        .sort((a, b) => {
-          const dateA = a.bookingDate?.toDate?.() || new Date(0);
-          const dateB = b.bookingDate?.toDate?.() || new Date(0);
-          return dateB - dateA;
-        })
-        .slice(0, 5);
-
       setStats({
-        todayBookings: todayData.length,
-        monthBookings: monthData.length,
         totalCustomers: customersData.length,
-        monthRevenue,
-        recentBookings
+        newsletterSubscribers: subscriberData.total || 0,
+        unreadMessages: messageData.unread || 0
       });
 
       setMembershipStats(membershipData);
@@ -104,20 +96,6 @@ export default function Dashboard() {
 
   const statsCards = [
     {
-      title: '今日預約',
-      value: loading ? '-' : stats.todayBookings.toString(),
-      icon: CalendarCheck,
-      trend: '',
-      color: 'text-primary'
-    },
-    {
-      title: '本月預約',
-      value: loading ? '-' : stats.monthBookings.toString(),
-      icon: Calendar,
-      trend: '',
-      color: 'text-secondary'
-    },
-    {
       title: '總會員數',
       value: loading ? '-' : stats.totalCustomers.toString(),
       icon: Users,
@@ -125,11 +103,18 @@ export default function Dashboard() {
       color: 'text-primary'
     },
     {
-      title: '本月營收',
-      value: loading ? '-' : `$${stats.monthRevenue.toLocaleString()}`,
-      icon: TrendingUp,
+      title: '電子報訂閱',
+      value: loading ? '-' : stats.newsletterSubscribers.toString(),
+      icon: Mail,
       trend: '',
-      color: 'text-secondary'
+      color: 'text-primary'
+    },
+    {
+      title: '未讀訊息',
+      value: loading ? '-' : stats.unreadMessages.toString(),
+      icon: MessageSquare,
+      trend: '',
+      color: stats.unreadMessages > 0 ? 'text-destructive' : 'text-muted-foreground'
     },
   ];
 
@@ -152,9 +137,9 @@ export default function Dashboard() {
               <p className="text-sm font-medium">{currentUser?.email}</p>
               <p className="text-xs text-muted-foreground">管理員</p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleLogout}
               className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
             >
@@ -172,17 +157,29 @@ export default function Dashboard() {
               <LayoutDashboard className="w-4 h-4 mr-2" />
               儀表板
             </TabsTrigger>
-            <TabsTrigger value="customers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Users className="w-4 h-4 mr-2" />
-              客戶管理
-            </TabsTrigger>
             <TabsTrigger value="bookings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Calendar className="w-4 h-4 mr-2" />
               預約管理
             </TabsTrigger>
+            <TabsTrigger value="visits" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <ClipboardList className="w-4 h-4 mr-2" />
+              來店記錄
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="w-4 h-4 mr-2" />
+              客戶管理
+            </TabsTrigger>
             <TabsTrigger value="services" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Sparkles className="w-4 h-4 mr-2" />
               療程管理
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              報表分析
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              訊息中心
             </TabsTrigger>
             <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="w-4 h-4 mr-2" />
@@ -196,7 +193,7 @@ export default function Dashboard() {
 
           {/* 儀表板內容 */}
           <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {statsCards.map((stat, index) => (
                 <Card key={index} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -230,65 +227,25 @@ export default function Dashboard() {
                 {loading ? (
                   <div className="text-center py-8 text-muted-foreground">載入中...</div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg text-center">
                       <div className="text-2xl font-bold text-gray-600">{membershipStats.regular}</div>
-                      <div className="text-sm text-muted-foreground mt-1">普通會員</div>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-blue-600">{membershipStats.deposit_20k}</div>
-                      <div className="text-sm text-muted-foreground mt-1">儲值 2萬</div>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-purple-600">{membershipStats.deposit_30k}</div>
-                      <div className="text-sm text-muted-foreground mt-1">儲值 3萬</div>
-                    </div>
-                    <div className="p-4 bg-amber-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-amber-600">{membershipStats.deposit_50k}</div>
-                      <div className="text-sm text-muted-foreground mt-1">儲值 5萬</div>
+                      <div className="text-sm text-muted-foreground mt-1">一般會員</div>
                     </div>
                     <div className="p-4 bg-rose-50 rounded-lg text-center">
                       <div className="text-2xl font-bold text-rose-600">{membershipStats.vip}</div>
                       <div className="text-sm text-muted-foreground mt-1">VIP會員</div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-secondary">最新預約</CardTitle>
-                <CardDescription>最近的客戶預約記錄</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground">載入中...</div>
-                ) : stats.recentBookings.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">尚無預約記錄</div>
-                ) : (
-                  <div className="space-y-4">
-                    {stats.recentBookings.map((booking) => (
-                      <div key={booking.id} className="flex items-center justify-between p-4 bg-accent/50 rounded-lg hover:bg-accent transition-colors">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                            <UserPlus className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-secondary">{booking.customerName || '未知客戶'}</p>
-                            <p className="text-sm text-muted-foreground">{booking.serviceName || '未指定療程'}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">
-                            {booking.bookingDate?.toDate?.()
-                              ? new Date(booking.bookingDate.toDate()).toLocaleDateString('zh-TW')
-                              : '未知日期'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{booking.bookingTime || '未知時間'}</p>
-                        </div>
+                    <div className="p-4 bg-blue-50 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-blue-600">{membershipStats.withDeposit || 0}</div>
+                      <div className="text-sm text-muted-foreground mt-1">有儲值客戶</div>
+                    </div>
+                    <div className="p-4 bg-amber-50 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-amber-600">
+                        NT$ {Math.round((membershipStats.totalBalance || 0) / 1000)}K
                       </div>
-                    ))}
+                      <div className="text-sm text-muted-foreground mt-1">總儲值餘額</div>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -296,28 +253,55 @@ export default function Dashboard() {
           </TabsContent>
 
           {/* 其他標籤頁內容 */}
-          <TabsContent value="customers">
-            <CustomerManagement />
+          <TabsContent value="bookings">
+            <Suspense fallback={<LoadingSpinner />}>
+              <BookingManagement />
+            </Suspense>
           </TabsContent>
 
-          <TabsContent value="bookings">
-            <BookingManagement />
+          <TabsContent value="visits">
+            <Suspense fallback={<LoadingSpinner />}>
+              <VisitManagement />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="customers">
+            <Suspense fallback={<LoadingSpinner />}>
+              <CustomerManagement />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="services">
-            <ServiceManagement />
+            <Suspense fallback={<LoadingSpinner />}>
+              <ServiceManagement />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <Suspense fallback={<LoadingSpinner />}>
+              <Reports />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <Suspense fallback={<LoadingSpinner />}>
+              <MessageCenter />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="content">
-            <ContentManagement />
+            <Suspense fallback={<LoadingSpinner />}>
+              <ContentManagement />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="settings">
-            <SettingsManagement />
+            <Suspense fallback={<LoadingSpinner />}>
+              <SettingsManagement />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
 }
-

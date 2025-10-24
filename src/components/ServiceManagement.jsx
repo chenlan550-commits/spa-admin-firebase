@@ -51,6 +51,7 @@ export default function ServiceManagement() {
     name: '',
     description: '',
     price: '',
+    selfOilPrice: '',
     duration: 60,
     order: 0,
     imageUrl: ''
@@ -84,6 +85,7 @@ export default function ServiceManagement() {
         name: service.name || '',
         description: service.description || '',
         price: service.price || '',
+        selfOilPrice: service.selfOilPrice || '',
         duration: service.duration || 60,
         order: service.order || 0,
         imageUrl: service.imageUrl || ''
@@ -95,6 +97,7 @@ export default function ServiceManagement() {
         name: '',
         description: '',
         price: '',
+        selfOilPrice: '',
         duration: 60,
         order: services.length,
         imageUrl: ''
@@ -228,8 +231,15 @@ export default function ServiceManagement() {
                       {service.description || '無描述'}
                     </p>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-lg font-bold text-primary">
-                        ${service.price}
+                      <div>
+                        <div className="text-lg font-bold text-primary">
+                          NT$ {service.price}
+                        </div>
+                        {service.selfOilPrice && (
+                          <div className="text-xs text-green-600 mt-1">
+                            自備精油 NT$ {service.selfOilPrice}
+                          </div>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {service.duration} 分鐘
@@ -294,16 +304,31 @@ export default function ServiceManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">價格 *</Label>
+                  <Label htmlFor="price">原價 *</Label>
                   <Input
                     id="price"
                     type="number"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     required
+                    placeholder="例如: 2000"
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="selfOilPrice">自備多特瑞精油優惠價</Label>
+                  <Input
+                    id="selfOilPrice"
+                    type="number"
+                    value={formData.selfOilPrice}
+                    onChange={(e) => setFormData({ ...formData, selfOilPrice: e.target.value })}
+                    placeholder="例如: 1500"
+                  />
+                  <p className="text-xs text-muted-foreground">客戶自備精油時的優惠價格</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="duration">時長（分鐘）</Label>
                   <Input
@@ -315,17 +340,17 @@ export default function ServiceManagement() {
                     step="15"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="order">排序順序</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                  min="0"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="order">排序順序</Label>
+                  <Input
+                    id="order"
+                    type="number"
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                    min="0"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

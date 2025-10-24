@@ -30,5 +30,32 @@ service cloud.firestore {
     match /customers/{document} {
       allow read, write: if request.auth != null;
     }
+
+    // 來店記錄 - 只有登入用戶可以訪問
+    match /visits/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 電子報訂閱 - 任何人可以訂閱，只有登入用戶可以查看和管理
+    match /newsletter_subscribers/{document} {
+      allow create: if true;  // 前端網站可以訂閱
+      allow read, update, delete: if request.auth != null;  // 只有後台管理員可以管理
+    }
+
+    // 聯絡訊息 - 任何人可以發送，只有登入用戶可以查看和管理
+    match /contact_messages/{document} {
+      allow create: if true;  // 前端網站可以發送訊息
+      allow read, update, delete: if request.auth != null;  // 只有後台管理員可以管理
+    }
+
+    // 儲值記錄 - 只有登入用戶可以訪問
+    match /deposit_records/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 餘額使用記錄 - 只有登入用戶可以訪問
+    match /balance_usage_records/{document} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
