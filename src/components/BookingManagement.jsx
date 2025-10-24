@@ -687,7 +687,7 @@ export default function BookingManagement() {
 
       {/* 新增/編輯預約對話框 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? '編輯預約' : '新增預約'}</DialogTitle>
             <DialogDescription>
@@ -695,11 +695,14 @@ export default function BookingManagement() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              {/* 客戶資訊 */}
-              <div className="space-y-4">
+            <div className="space-y-6 py-4">
+              {/* 客戶資訊區塊 */}
+              <div className="border rounded-lg p-4 space-y-4 bg-slate-50">
                 <div className="flex items-center justify-between">
-                  <Label>客戶資訊</Label>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-primary" />
+                    <Label className="text-base font-semibold">客戶資訊</Label>
+                  </div>
                   {!isEditing && (
                     <Button
                       type="button"
@@ -753,192 +756,217 @@ export default function BookingManagement() {
                       className="bg-muted"
                     />
                   </div>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    readOnly
-                    className="bg-muted"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="membershipLevel">會員等級</Label>
-                  <Input
-                    id="membershipLevel"
-                    value={formData.membershipLevel === 'vip' ? 'VIP會員' : '一般會員'}
-                    readOnly
-                    className="bg-muted"
-                  />
-                </div>
-              </div>
-
-              {/* 預約資訊 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bookingDate">預約日期 *</Label>
-                  <Input
-                    id="bookingDate"
-                    type="date"
-                    value={formData.bookingDate}
-                    onChange={(e) => setFormData({ ...formData, bookingDate: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bookingTime">預約時間 *</Label>
-                  <Input
-                    id="bookingTime"
-                    type="time"
-                    value={formData.bookingTime}
-                    onChange={(e) => setFormData({ ...formData, bookingTime: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* 療程選擇 */}
-              <div className="space-y-2">
-                <Label htmlFor="serviceId">療程項目 *</Label>
-                <Select
-                  value={formData.serviceId}
-                  onValueChange={handleServiceChange}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="選擇療程" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        {service.name} - NT$ {service.price}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* 自備精油（僅一般會員） */}
-              {formData.membershipLevel === 'regular' && formData.serviceId && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="useSelfOil"
-                      checked={formData.useSelfOil}
-                      onChange={(e) => handleSelfOilChange(e.target.checked)}
-                      className="w-4 h-4"
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      readOnly
+                      className="bg-muted"
                     />
-                    <Label htmlFor="useSelfOil" className="cursor-pointer">
-                      自備多特瑞精油（優惠價 NT$ {formData.selfOilPrice}）
-                    </Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="membershipLevel">會員等級</Label>
+                    <div className="flex items-center h-10 px-3 rounded-md border bg-muted">
+                      {formData.membershipLevel === 'vip' ? (
+                        <Badge variant="default" className="bg-amber-600">
+                          <Crown className="w-3 h-3 mr-1" />
+                          VIP會員
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">一般會員</Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* 精油費用（僅VIP會員） */}
-              {formData.membershipLevel === 'vip' && formData.serviceId && (
-                <div className="space-y-2 col-span-2">
-                  <Label>忘記帶精油額外費用（VIP專用）</Label>
-                  <div className="flex items-center space-x-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleExtraOilFeeChange(-100)}
-                      disabled={formData.extraOilFee === 0}
+              {/* 預約時間區塊 */}
+              <div className="border rounded-lg p-4 space-y-4 bg-blue-50">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <Label className="text-base font-semibold">預約時間</Label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bookingDate">預約日期 *</Label>
+                    <Input
+                      id="bookingDate"
+                      type="date"
+                      value={formData.bookingDate}
+                      onChange={(e) => setFormData({ ...formData, bookingDate: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bookingTime">預約時間 *</Label>
+                    <Input
+                      id="bookingTime"
+                      type="time"
+                      value={formData.bookingTime}
+                      onChange={(e) => setFormData({ ...formData, bookingTime: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 療程選擇區塊 */}
+              <div className="border rounded-lg p-4 space-y-4 bg-green-50">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  <Label className="text-base font-semibold">療程項目</Label>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="serviceId">主要療程 *</Label>
+                    <Select
+                      value={formData.serviceId}
+                      onValueChange={handleServiceChange}
+                      required
                     >
-                      - NT$ 100
-                    </Button>
-                    <div className="flex-1 text-center">
-                      <div className="text-2xl font-bold text-orange-600">
-                        NT$ {formData.extraOilFee}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formData.extraOilFee > 0 ? '已加收精油費用' : '無需額外費用'}
+                      <SelectTrigger>
+                        <SelectValue placeholder="選擇療程" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {services.map((service) => (
+                          <SelectItem key={service.id} value={service.id}>
+                            {service.name} - NT$ {service.price}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 自備精油（僅一般會員） */}
+                  {formData.membershipLevel === 'regular' && formData.serviceId && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="useSelfOil"
+                          checked={formData.useSelfOil}
+                          onChange={(e) => handleSelfOilChange(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="useSelfOil" className="cursor-pointer font-medium">
+                          自備多特瑞精油（優惠價 NT$ {formData.selfOilPrice}）
+                        </Label>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleExtraOilFeeChange(100)}
-                    >
-                      + NT$ 100
-                    </Button>
+                  )}
+
+                  {/* 精油費用（僅VIP會員） */}
+                  {formData.membershipLevel === 'vip' && formData.serviceId && (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <Label className="block mb-3 font-medium">忘記帶精油額外費用（VIP專用）</Label>
+                      <div className="flex items-center space-x-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExtraOilFeeChange(-100)}
+                          disabled={formData.extraOilFee === 0}
+                        >
+                          - NT$ 100
+                        </Button>
+                        <div className="flex-1 text-center">
+                          <div className="text-2xl font-bold text-orange-600">
+                            NT$ {formData.extraOilFee}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formData.extraOilFee > 0 ? '已加收精油費用' : '無需額外費用'}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExtraOilFeeChange(100)}
+                        >
+                          + NT$ 100
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 加購課程 */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="additionalServiceId">加購課程（可選）</Label>
+                      <Select
+                        value={formData.additionalServiceId || 'none'}
+                        onValueChange={handleAdditionalServiceChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="選擇加購課程" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">無加購</SelectItem>
+                          {addonServices.map((addon) => (
+                            <SelectItem key={addon.id} value={addon.id}>
+                              {addon.name} - NT$ {addon.price} ({addon.duration}分鐘)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="additionalServicePrice">加購價格</Label>
+                      <Input
+                        id="additionalServicePrice"
+                        type="number"
+                        value={formData.additionalServicePrice}
+                        readOnly
+                        className="bg-muted"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* 價格顯示 */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>原價</Label>
-                  <Input
-                    value={`NT$ ${formData.originalPrice}`}
-                    readOnly
-                    className="bg-muted"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>優惠價格</Label>
-                  <Input
-                    value={`NT$ ${formData.price}`}
-                    readOnly
-                    className="bg-muted"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>總價</Label>
-                  <Input
-                    value={`NT$ ${formData.totalPrice}`}
-                    readOnly
-                    className="bg-muted font-bold"
-                  />
                 </div>
               </div>
 
-              {/* 加購課程 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="additionalServiceId">加購課程</Label>
-                  <Select
-                    value={formData.additionalServiceId || 'none'}
-                    onValueChange={handleAdditionalServiceChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="選擇加購課程（可選）" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">無加購</SelectItem>
-                      {addonServices.map((addon) => (
-                        <SelectItem key={addon.id} value={addon.id}>
-                          {addon.name} - NT$ {addon.price} ({addon.duration}分鐘)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* 價格總覽區塊 */}
+              <div className="border-2 border-primary rounded-lg p-4 space-y-3 bg-primary/5">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="w-4 h-4 text-primary" />
+                  <Label className="text-base font-semibold">價格總覽</Label>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="additionalServicePrice">加購價格</Label>
-                  <Input
-                    id="additionalServicePrice"
-                    type="number"
-                    value={formData.additionalServicePrice}
-                    readOnly
-                    className="bg-muted"
-                  />
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">原價</Label>
+                    <div className="text-lg font-medium line-through text-muted-foreground">
+                      NT$ {formData.originalPrice}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">優惠價格</Label>
+                    <div className="text-lg font-medium text-green-600">
+                      NT$ {formData.price}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">應付總價</Label>
+                    <div className="text-2xl font-bold text-primary">
+                      NT$ {formData.totalPrice}
+                    </div>
+                  </div>
                 </div>
+
+                {formData.additionalServicePrice > 0 && (
+                  <div className="pt-2 border-t text-sm text-muted-foreground">
+                    包含加購課程：NT$ {formData.additionalServicePrice}
+                  </div>
+                )}
               </div>
 
               {/* 預約狀態和付款方式 */}
@@ -986,11 +1014,12 @@ export default function BookingManagement() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
+                  placeholder="輸入預約備註..."
                 />
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 取消
               </Button>
@@ -1006,7 +1035,7 @@ export default function BookingManagement() {
                 </Button>
               )}
               <Button type="submit">
-                {isEditing ? '更新' : '新增'}
+                {isEditing ? '更新預約' : '建立預約'}
               </Button>
             </DialogFooter>
           </form>
