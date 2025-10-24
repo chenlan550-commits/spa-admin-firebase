@@ -7,7 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "pnpm run build && firebase deploy",
+    "deploy:hosting": "pnpm run build && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
+    "deploy:preview": "pnpm run build && firebase hosting:channel:deploy preview",
+    "firebase:login": "firebase login",
+    "firebase:logout": "firebase logout",
+    "firebase:projects": "firebase projects:list"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
